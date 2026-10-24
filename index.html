@@ -1,11 +1,18 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-build="20261024-2">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f7f4ee">
+<script>
+/* защита от кэша: если на сервере новее — перезагружаемся с новым ?v= */
+fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){
+  v=(v||"").trim(); var cur=document.documentElement.getAttribute("data-build");
+  if(v && cur && v!==cur){ location.replace(location.pathname+"?v="+encodeURIComponent(v)); }
+}).catch(function(){});
+</script>
 <title>90 дней</title>
 <style>
   :root{
@@ -92,6 +99,7 @@
 <div class="legend"><i></i> пусто <i class="mid"></i> часть <i class="full"></i> закрыт</div>
 
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 2</div>
 
 <script>
 (function(){
