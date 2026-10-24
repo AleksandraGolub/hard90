@@ -4,54 +4,85 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0e0e0e">
-<title>90</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f7f4ee">
+<title>90 дней</title>
 <style>
   :root{
-    --bg:#0e0e0e; --card:#171717; --line:#2a2a2a; --txt:#f2f2f2; --dim:#8a8a8a;
-    --acc:#c8ff3d; --warn:#ffb020;
+    --paper:#f7f4ee;
+    --paper2:#eee9df;
+    --card:#ffffff;
+    --line:#e7e1d5;
+    --ink:#211e19;
+    --dim:#8f887b;
+    --faint:#b6afa1;
+    --acc:#4a7c59;
+    --acc-soft:#eaf1e8;
+    --acc-line:#cfe0cd;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--txt);
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif}
-  body{padding:max(18px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
-  header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
-  .day{font-size:44px;font-weight:700;letter-spacing:-1.5px;line-height:1}
-  .day small{font-size:15px;font-weight:500;color:var(--dim);letter-spacing:0}
-  .week{font-size:13px;color:var(--dim);text-align:right;line-height:1.35}
-  .bar{height:6px;background:#222;border-radius:3px;overflow:hidden;margin:14px 0 18px}
-  .bar i{display:block;height:100%;width:0%;background:var(--acc);border-radius:3px;transition:width .25s}
-  h2{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);margin:22px 0 10px;font-weight:600}
-  .habit{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
-    border-radius:14px;padding:15px 14px;margin-bottom:8px;transition:.12s}
+  html,body{margin:0}
+  body{
+    background:linear-gradient(180deg,#faf8f3 0%,var(--paper) 40%,var(--paper2) 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;
+    padding:max(20px,env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));
+    max-width:520px;margin:0 auto;min-height:100vh;
+  }
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+  .day{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:42px;line-height:1;letter-spacing:-.5px;
+  }
+  .day small{font-family:-apple-system,system-ui,sans-serif;font-size:14px;color:var(--dim);letter-spacing:0;font-weight:500}
+  .pill{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:7px 12px;text-align:center;font-size:11.5px;color:var(--dim);line-height:1.35;
+    box-shadow:0 1px 2px rgba(33,30,25,.04);white-space:nowrap;
+  }
+  .pill b{display:block;color:var(--ink);font-size:15px;font-weight:600}
+  .bar{height:8px;background:#e7e1d5;border-radius:5px;overflow:hidden;margin:2px 0 6px}
+  .bar i{display:block;height:100%;width:0%;background:var(--acc);border-radius:5px;transition:width .3s ease}
+  .barnote{font-size:11.5px;color:var(--faint);display:flex;justify-content:space-between}
+  h2{font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--faint);
+    margin:26px 0 11px;font-weight:600}
+  .habit{display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:15px;margin-bottom:9px;
+    transition:transform .12s ease,background .18s,border-color .18s;
+    box-shadow:0 1px 2px rgba(33,30,25,.035)}
   .habit:active{transform:scale(.985)}
-  .dot{width:24px;height:24px;border-radius:50%;border:2px solid #3a3a3a;flex:0 0 24px;
-    display:flex;align-items:center;justify-content:center;font-size:14px;color:#0e0e0e;font-weight:800}
+  .dot{width:26px;height:26px;border-radius:50%;border:2px solid #ded8ca;flex:0 0 26px;
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;
+    transition:background .18s,border-color .18s}
+  .habit.on{background:var(--acc-soft);border-color:var(--acc-line)}
   .habit.on .dot{background:var(--acc);border-color:var(--acc)}
-  .habit.on .lbl{color:var(--acc)}
-  .lbl{font-size:16px;flex:1}
-  .hint{font-size:12px;color:var(--dim);margin-top:2px}
-  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-  .cell{aspect-ratio:1;border-radius:7px;background:#1c1c1c;border:1px solid #262626;position:relative;
-    display:flex;align-items:flex-end;justify-content:center;font-size:9px;color:#6a6a6a;padding-bottom:3px;overflow:hidden}
+  .habit.on .lbl{color:#2f5c40}
+  .lbl{font-size:16px;flex:1;letter-spacing:-.1px}
+  .hint{font-size:12px;color:var(--dim);margin-top:3px}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cell{aspect-ratio:1;border-radius:9px;background:var(--card);border:1px solid var(--line);
+    position:relative;display:flex;align-items:flex-end;justify-content:center;font-size:9.5px;
+    color:var(--faint);padding-bottom:3px;overflow:hidden;box-shadow:0 1px 1px rgba(33,30,25,.03)}
   .cell b{position:relative;z-index:1;font-weight:600}
-  .cell.today{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
-  .cell.mile{color:#cfcfcf}
-  .legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);margin-top:10px}
-  .legend i{width:12px;height:12px;border-radius:4px;background:#1c1c1c;border:1px solid #262626;display:inline-block}
-  .legend i.mid{background:linear-gradient(to top,var(--acc) 55%,#1c1c1c 55%)}
+  .cell.past b{color:#7c766a}
+  .cell.today{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc) inset}
+  .cell.mile b{color:var(--acc);font-weight:700}
+  .legend{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--faint);margin-top:11px;flex-wrap:wrap}
+  .legend i{width:13px;height:13px;border-radius:4px;background:var(--card);border:1px solid var(--line);display:inline-block}
+  .legend i.mid{background:linear-gradient(to top,var(--acc) 55%,#fff 55%);border-color:var(--acc-line)}
   .legend i.full{background:var(--acc);border-color:var(--acc)}
-  .danger{margin-top:26px;font-size:12px;color:#5e5e5e;text-align:center}
+  .danger{margin-top:28px;font-size:12px;color:var(--faint);text-align:center}
   .danger span{text-decoration:underline;text-underline-offset:3px}
 </style>
 </head>
 <body>
 <header>
-  <div class="day" id="dayNum">День 1<small id="of90"> из 90</small></div>
-  <div class="week" id="todayLabel"></div>
+  <div class="day" id="dayNum">День 1<small> из 90</small></div>
+  <div class="pill" id="todayLabel"></div>
 </header>
 <div class="bar"><i id="barFill"></i></div>
+<div class="barnote"><span id="barLeft"></span><span id="barRight"></span></div>
 
 <h2 id="listTitle">Сегодня</h2>
 <div id="habits"></div>
@@ -67,12 +98,12 @@
   const START = new Date(2026, 9, 26);           // 26.10.2026
   const TOTAL = 90;
   const HABITS = [
-    ["gym",   "Силовые",           "пн / ср / пт · 09:00"],
-    ["steps", "8000 шагов",        "любой день"],
-    ["prot",  "120 г белка",       "считать вечером"],
-    ["eng",   "45 мин английского","урок или дрилл"],
-    ["read",  "25 мин чтения",     "или урок курса"],
-    ["sleep", "Отбой 23:30",       "подъём 07:30"]
+    ["gym",   "Силовые",            "пн / ср / пт · 09:00"],
+    ["steps", "8000 шагов",         "любой день"],
+    ["prot",  "120 г белка",        "считать вечером"],
+    ["eng",   "45 мин английского", "урок или дрилл"],
+    ["read",  "25 мин чтения",      "или урок курса"],
+    ["sleep", "Отбой 23:30",        "подъём 07:30"]
   ];
   const KEY = "hard90.v1";
   const MILES = {0:"0",29:"30",59:"60",89:"90"};
@@ -87,7 +118,6 @@
   let selected = new Date(Math.max(START.getTime(), today.getTime()));
 
   const doneCount = d => (state[key(d)] || []).length;
-  const isOn = d => dayIndex >= 0 && dayIndex < TOTAL;
 
   const WD = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
   const MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
@@ -99,18 +129,19 @@
       (inRange ? "День " + (idx+1) + '<small> из 90</small>'
                : (idx < 0 ? "До старта" : "Финиш"));
     document.getElementById("todayLabel").innerHTML =
-      WD[selected.getDay()] + "<br>" + selected.getDate() + " " + MON[selected.getMonth()];
+      WD[selected.getDay()] + "<b>" + selected.getDate() + " " + MON[selected.getMonth()] + "</b>";
 
     const sel = key(selected);
     const on = state[sel] || [];
-    document.getElementById("listTitle").textContent = inRange ? "Сегодня" : "Этого дня нет в режиме";
+    document.getElementById("listTitle").textContent = inRange ? "Сегодня" : "Этот день вне режима";
 
     const box = document.getElementById("habits");
     box.innerHTML = "";
     HABITS.forEach(function(h){
+      const isOn = on.indexOf(h[0]) >= 0;
       const el = document.createElement("div");
-      el.className = "habit" + (on.indexOf(h[0]) >= 0 ? " on" : "");
-      el.innerHTML = '<div class="dot">' + (on.indexOf(h[0]) >= 0 ? "✓" : "") + '</div>' +
+      el.className = "habit" + (isOn ? " on" : "");
+      el.innerHTML = '<div class="dot">' + (isOn ? "✓" : "") + '</div>' +
         '<div><div class="lbl">' + h[1] + '</div><div class="hint">' + h[2] + '</div></div>';
       el.onclick = function(){
         const cur = state[sel] || [];
@@ -128,22 +159,26 @@
       const d = new Date(START.getTime() + i*86400000);
       const n = doneCount(d);
       const c = document.createElement("div");
-      c.className = "cell" + (key(d) === key(today) ? " today" : "") + (MILES[i] ? " mile" : "");
+      c.className = "cell" + (key(d) === key(today) ? " today" : "") +
+        (MILES[i] ? " mile" : "") + (i < dayIndex ? " past" : "");
       const pct = Math.round(n / HABITS.length * 100);
-      c.style.background = pct === 0 ? "" : "linear-gradient(to top, var(--acc) " + pct + "%, #1c1c1c " + pct + "%)";
+      c.style.background = pct === 0 ? "" : "linear-gradient(to top, var(--acc) " + pct + "%, #ffffff " + pct + "%)";
       c.innerHTML = "<b>" + (MILES[i] || (i+1)) + "</b>";
       c.onclick = function(){ selected = d; render(); window.scrollTo({top:0,behavior:"smooth"}); };
       g.appendChild(c);
     }
 
     // прогресс: закрытые дни / прошедшие дни
-    let elapsed = Math.min(Math.max(dayIndex + 1, 1), TOTAL);
+    const elapsed = Math.min(Math.max(dayIndex + 1, 1), TOTAL);
     let full = 0;
     for (let i=0;i<elapsed;i++){
       const d = new Date(START.getTime() + i*86400000);
       if (doneCount(d) === HABITS.length) full++;
     }
-    document.getElementById("barFill").style.width = Math.round(full/elapsed*100) + "%";
+    const pct = Math.round(full/elapsed*100);
+    document.getElementById("barFill").style.width = pct + "%";
+    document.getElementById("barLeft").textContent = "закрыто " + full + " из " + elapsed + " дней";
+    document.getElementById("barRight").textContent = pct + "%";
   }
 
   let armed = false;
