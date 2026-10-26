@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261026-2">
+<html lang="ru" data-build="20261026-3">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -67,6 +67,9 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   .habit.on .lbl{color:#2f5c40}
   .lbl{font-size:16px;flex:1;letter-spacing:-.1px}
   .hint{font-size:12px;color:var(--dim);margin-top:3px}
+  .whoop{font-size:9px;letter-spacing:.7px;color:#3f6b4c;background:var(--acc-soft);
+    border:1px solid var(--acc-line);border-radius:6px;padding:2px 5px;margin-left:7px;
+    vertical-align:2px;font-weight:600}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;
     box-shadow:0 1px 2px rgba(33,30,25,.035);font-size:14px;line-height:1.55}
   .card .row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f3efe7}
@@ -131,7 +134,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
 <div class="rule">пропуск — день не закрашен. рестарта нет.</div>
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 5</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 6</div>
 
 <script>
 (function(){
@@ -162,10 +165,29 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
   // привычки, которые в этот день вообще есть: силовая — только пн/ср/пт
   const habitsFor = d => HABITS.filter(h => !h[3] || h[3].indexOf(d.getDay()) >= 0);
+
+  // WHOOP: шаги и утреннюю прогулку ставит скрипт, не руки
+  const AUTO = { days: {} };
+  const AUTO_IDS = ["steps", "light"];
+  const autoFor = d => AUTO.days[key(d)] || null;
+  const autoDone = (id, d) => {
+    const a = autoFor(d);
+    if (!a) return null;
+    if (id === "steps") return !!a.steps_done;
+    if (id === "light") return !!a.walk_done;
+    return null;
+  };
   const doneFor = d => {
     const on = state[key(d)] || [];
-    return habitsFor(d).filter(h => on.indexOf(h[0]) >= 0).length;
+    return habitsFor(d).filter(h => {
+      const ad = autoDone(h[0], d);
+      return ad === null ? on.indexOf(h[0]) >= 0 : ad;
+    }).length;
   };
+  const loadAuto = () => fetch("auto.json?t=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if (j && j.days) { AUTO.days = j.days; render(); } })
+    .catch(() => {});
 
   const WD = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
   const MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
@@ -194,17 +216,32 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     const box = document.getElementById("habits");
     box.innerHTML = "";
     habitsFor(selected).forEach(function(h){
-      const isOn = on.indexOf(h[0]) >= 0;
+      const a = autoFor(selected);
+      const ad = autoDone(h[0], selected);
+      const isOn = ad === null ? on.indexOf(h[0]) >= 0 : ad;
+      let hint = h[2], tag = "";
+      if (ad !== null) {
+        tag = '<span class="whoop">WHOOP</span>';
+        if (h[0] === "steps") {
+          hint = a.steps ? a.steps.toLocaleString("ru-RU") + " из 8 000 · синхронизировано" : "нет данных WHOOP";
+        } else {
+          hint = a.walk_min
+            ? a.walk_start + " · " + a.walk_min + " мин · подъём " + (a.wake || "—")
+            : "прогулки в первый час в WHOOP нет";
+        }
+      }
       const el = document.createElement("div");
-      el.className = "habit" + (isOn ? " on" : "");
+      el.className = "habit" + (isOn ? " on" : "") + (ad !== null ? " auto" : "");
       el.innerHTML = '<div class="dot">' + (isOn ? "✓" : "") + '</div>' +
-        '<div><div class="lbl">' + h[1] + '</div><div class="hint">' + h[2] + '</div></div>';
-      el.onclick = function(){
-        const cur = state[sel] || [];
-        const i = cur.indexOf(h[0]);
-        if (i >= 0) cur.splice(i,1); else cur.push(h[0]);
-        state[sel] = cur; save(state); render();
-      };
+        '<div><div class="lbl">' + h[1] + tag + '</div><div class="hint">' + hint + '</div></div>';
+      if (ad === null) {
+        el.onclick = function(){
+          const cur = state[sel] || [];
+          const i = cur.indexOf(h[0]);
+          if (i >= 0) cur.splice(i,1); else cur.push(h[0]);
+          state[sel] = cur; save(state); render();
+        };
+      }
       box.appendChild(el);
     });
 
@@ -241,6 +278,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       : "старт 26 октября";
     document.getElementById("barRight").textContent = elapsed ? pct + "%" : "";
   }
+
+  loadAuto();
+  setInterval(loadAuto, 600000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) loadAuto(); });
 
   let armed = false;
   document.getElementById("reset").onclick = function(){
