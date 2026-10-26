@@ -1,11 +1,11 @@
 {
- "updated": "2026-10-26T20:05:57+02:00",
+ "updated": "2026-10-26T22:05:57+02:00",
  "source": "whoop",
  "days": {
   "2026-10-26": {
-   "steps": 7550,
+   "steps": 8016,
    "steps_goal": 8000,
-   "steps_done": false,
+   "steps_done": true,
    "walk_min": 31,
    "walk_done": true,
    "walk_start": "07:05",
