@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261026-3">
+<html lang="ru" data-build="20261026-4">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -134,7 +134,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
 <div class="rule">пропуск — день не закрашен. рестарта нет.</div>
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 6</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 7</div>
 
 <script>
 (function(){
@@ -177,13 +177,12 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     if (id === "light") return !!a.walk_done;
     return null;
   };
-  const doneFor = d => {
+  // WHOOP может только добавить галочку, но не отобрать поставленную руками
+  const isDone = (id, d) => {
     const on = state[key(d)] || [];
-    return habitsFor(d).filter(h => {
-      const ad = autoDone(h[0], d);
-      return ad === null ? on.indexOf(h[0]) >= 0 : ad;
-    }).length;
+    return autoDone(id, d) === true || on.indexOf(id) >= 0;
   };
+  const doneFor = d => habitsFor(d).filter(h => isDone(h[0], d)).length;
   const loadAuto = () => fetch("auto.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
     .then(j => { if (j && j.days) { AUTO.days = j.days; render(); } })
@@ -218,7 +217,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     habitsFor(selected).forEach(function(h){
       const a = autoFor(selected);
       const ad = autoDone(h[0], selected);
-      const isOn = ad === null ? on.indexOf(h[0]) >= 0 : ad;
+      const isOn = ad === true || on.indexOf(h[0]) >= 0;
       let hint = h[2], tag = "";
       if (ad !== null) {
         tag = '<span class="whoop">WHOOP</span>';
@@ -234,7 +233,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       el.className = "habit" + (isOn ? " on" : "") + (ad !== null ? " auto" : "");
       el.innerHTML = '<div class="dot">' + (isOn ? "✓" : "") + '</div>' +
         '<div><div class="lbl">' + h[1] + tag + '</div><div class="hint">' + hint + '</div></div>';
-      if (ad === null) {
+      if (ad !== true) {
         el.onclick = function(){
           const cur = state[sel] || [];
           const i = cur.indexOf(h[0]);
