@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261025-1">
+<html lang="ru" data-build="20261026-1">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -131,7 +131,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
 <div class="rule">пропуск — день не закрашен. рестарта нет.</div>
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 3</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 4</div>
 
 <script>
 (function(){
@@ -139,8 +139,8 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   const TOTAL = 75;
   const HABITS = [
     ["plank", "Планка утром",        "3 подхода · дыхание не задерживать"],
-    ["light", "30 минут улицы",      "в первый час после подъёма"],
-    ["move",  "Движение 45 минут",   "силовая пн / ср / пт, иначе ходьба"],
+    ["steps", "8 000 шагов",         "первые 2 000 — на улице в первый час"],
+    ["lift",  "Силовая",             "пн / ср / пт · зал или дом", [1,3,5]],
     ["prot",  "Белок 120–135 г",     "ноль алкоголя, читмилов нет"],
     ["eng",   "Английский 25 минут", "вслух, не чтение"],
     ["read",  "10 страниц",          "бумага в постели, не телефон"],
@@ -159,7 +159,12 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   if (!state.cycle) state.cycle = {};
   let selected = new Date(Math.max(START.getTime(), today.getTime()));
 
-  const doneCount = d => ((state[key(d)] || []).length);
+  // привычки, которые в этот день вообще есть: силовая — только пн/ср/пт
+  const habitsFor = d => HABITS.filter(h => !h[3] || h[3].indexOf(d.getDay()) >= 0);
+  const doneFor = d => {
+    const on = state[key(d)] || [];
+    return habitsFor(d).filter(h => on.indexOf(h[0]) >= 0).length;
+  };
 
   const WD = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
   const MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
@@ -187,7 +192,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
     const box = document.getElementById("habits");
     box.innerHTML = "";
-    HABITS.forEach(function(h){
+    habitsFor(selected).forEach(function(h){
       const isOn = on.indexOf(h[0]) >= 0;
       const el = document.createElement("div");
       el.className = "habit" + (isOn ? " on" : "");
@@ -210,11 +215,11 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     g.innerHTML = "";
     for (let i=0;i<TOTAL;i++){
       const d = new Date(START.getTime() + i*86400000);
-      const n = doneCount(d);
+      const n = doneFor(d);
       const c = document.createElement("div");
       c.className = "cell" + (key(d) === key(today) ? " today" : "") +
         (MILES[i] ? " mile" : "") + (i < dayIndex ? " past" : "");
-      const pct = Math.round(n / HABITS.length * 100);
+      const pct = Math.round(n / habitsFor(d).length * 100);
       c.style.background = pct === 0 ? "" : "linear-gradient(to top, var(--acc) " + pct + "%, #ffffff " + pct + "%)";
       c.innerHTML = "<b>" + (i+1) + "</b>";
       c.onclick = function(){ selected = d; render(); window.scrollTo({top:0,behavior:"smooth"}); };
@@ -226,7 +231,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     let full = 0;
     for (let i=0;i<elapsed;i++){
       const d = new Date(START.getTime() + i*86400000);
-      if (doneCount(d) === HABITS.length) full++;
+      if (doneFor(d) === habitsFor(d).length) full++;
     }
     const pct = elapsed ? Math.round(full/elapsed*100) : 0;
     document.getElementById("barFill").style.width = pct + "%";
