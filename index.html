@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261026-5">
+<html lang="ru" data-build="20261026-7">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -10,7 +10,9 @@
 /* защита от кэша: если на сервере новее — перезагружаемся с новым ?v= */
 fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){
   v=(v||"").trim(); var cur=document.documentElement.getAttribute("data-build");
-  if(v && cur && v!==cur){ location.replace(location.pathname+"?v="+encodeURIComponent(v)); }
+  var asked=new URLSearchParams(location.search).get("v");
+  /* редирект один раз: если в URL уже эта версия, а билд всё равно старый — не перезагружаемся по кругу */
+  if(v && cur && v!==cur && asked!==v){ location.replace(location.pathname+"?v="+encodeURIComponent(v)); }
 }).catch(function(){});
 </script>
 <title>75 дней</title>
@@ -259,7 +261,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       const pct = Math.round(n / habitsFor(d).length * 100);
       c.style.background = pct === 0 ? "" : "linear-gradient(to top, var(--acc) " + pct + "%, #ffffff " + pct + "%)";
       c.innerHTML = "<b>" + (i+1) + "</b>";
-      c.onclick = function(){ selected = d; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+      c.onclick = function(){ selected = d; render();
+        var r=document.getElementById("listTitle").getBoundingClientRect();
+        if(r.top<0 || r.bottom>window.innerHeight) document.getElementById("listTitle").scrollIntoView({behavior:"smooth",block:"start"});
+      };
       g.appendChild(c);
     }
 
