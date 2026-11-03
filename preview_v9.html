@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ru" data-build="preview-v9">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f7f4ee">
+<title>75 дней — неделя</title>
+<style>
+  :root{
+    --paper:#f7f4ee; --paper2:#eee9df; --card:#ffffff; --line:#e7e1d5;
+    --ink:#211e19; --dim:#8f887b; --faint:#b6afa1;
+    --acc:#4a7c59; --acc-soft:#eaf1e8; --acc-line:#cfe0cd;
+    --l1:#cfe3c8; --l2:#8fb98a; --l3:#3f6f4d;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:linear-gradient(180deg,#faf8f3 0%,var(--paper) 40%,var(--paper2) 100%);
+    background-attachment:fixed; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;
+    padding:max(18px,env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));
+    max-width:520px;margin:0 auto;min-height:100vh;
+  }
+
+  /* шапка: номер дня — кнопка */
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .daybtn{background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
+  .daybtn .dnum{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    font-size:40px;line-height:.95;letter-spacing:-.5px;display:block;
+  }
+  .daybtn .dnum small{font-family:inherit;font-size:20px;color:var(--faint)}
+  .daybtn .dsub{font-size:11.5px;color:var(--dim);letter-spacing:.2px;display:flex;align-items:center;gap:5px;margin-top:5px}
+  .daybtn .dsub:after{content:"→";font-size:11px;color:var(--acc)}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:6px 11px;text-align:center;font-size:11px;color:var(--dim);line-height:1.3;
+    box-shadow:0 1px 2px rgba(33,30,25,.04);white-space:nowrap}
+  .pill b{display:block;color:var(--ink);font-size:14px;font-weight:600}
+
+  /* три числа вместо полоски */
+  .stats{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:18px}
+  .stat{background:var(--card);padding:9px 10px 8px;text-align:left}
+  .stat b{display:block;font-size:22px;line-height:1;letter-spacing:-.5px;
+    font-family:"Iowan Old Style",Palatino,Georgia,serif;font-weight:400}
+  .stat b span{font-size:13px;color:var(--dim);letter-spacing:0}
+  .stat i{display:block;font-style:normal;font-size:10.5px;color:var(--dim);margin-top:5px;line-height:1.25}
+  .stat.hi b{color:var(--acc)}
+
+  h2{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:#a49c8d;
+    margin:18px 0 8px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+  h2 button{font:inherit;font-size:10.5px;letter-spacing:.4px;color:var(--acc);
+    background:none;border:0;padding:0;text-transform:none}
+
+  /* неделя */
+  .week{display:flex;gap:5px;align-items:flex-start}
+  .wday{flex:1 1 0;min-width:0;background:var(--card);border:1px solid var(--line);
+    border-radius:13px;padding:8px 4px 7px;text-align:center;cursor:pointer;
+    transition:transform .1s ease, border-color .15s, background .15s}
+  .wday:active{transform:scale(.97)}
+  .wday .wd{display:block;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:#9d9586}
+  .wday .dn{display:block;font-size:16px;line-height:1.15;font-weight:600;letter-spacing:-.2px;margin:1px 0 6px}
+  .wday .dots{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:6px}
+  .wday .dots i{width:4px;height:4px;border-radius:50%;background:#e2dccf;display:block}
+  .wday .dots i.on{background:var(--acc)}
+  .wday.today{flex:2.1 1 0;background:#fdfcf8;border-color:var(--acc-line);
+    box-shadow:0 0 0 1.5px var(--acc-line) inset}
+  .wday.today .dn{font-size:22px;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-weight:400}
+  .wday.today .dots i{width:5px;height:5px}
+  .wday.sel{border-color:var(--acc);box-shadow:0 0 0 1.5px var(--acc) inset}
+  .wday.off{opacity:.42}
+  .wday .wp{display:block;font-size:9.5px;color:#9d9586;margin-top:7px;letter-spacing:.2px;min-height:11px}
+  .wday.today .wp{color:var(--acc);font-weight:600;font-size:10.5px}
+
+  /* привычки дня */
+  .habit{display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:15px;margin-bottom:9px;
+    transition:transform .12s ease,background .18s,border-color .18s;
+    box-shadow:0 1px 2px rgba(33,30,25,.035)}
+  .habit:active{transform:scale(.985)}
+  .dot{width:26px;height:26px;border-radius:50%;border:2px solid #ded8ca;flex:0 0 26px;
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;
+    transition:background .18s,border-color .18s}
+  .habit.on{background:#fbfaf6;border-color:var(--line)}
+  .habit.on .dot{background:var(--acc);border-color:var(--acc)}
+  .habit.on .lbl{color:#8c8579}
+  .habit.next{border-color:var(--acc-line);box-shadow:0 0 0 1.5px var(--acc-line)}
+  .habit.next .dot{border-color:var(--acc)}
+  .lbl{font-size:16px;flex:1;letter-spacing:-.1px}
+  .hint{font-size:12px;color:var(--dim);margin-top:3px}
+  .whoop{font-size:9px;letter-spacing:.7px;color:#3f6b4c;background:var(--acc-soft);
+    border:1px solid var(--acc-line);border-radius:6px;padding:2px 5px;margin-left:7px;
+    vertical-align:2px;font-weight:600}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;
+    box-shadow:0 1px 2px rgba(33,30,25,.035);font-size:14px;line-height:1.55}
+  .card .row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f3efe7}
+  .card .row:last-child{border-bottom:0;padding-bottom:0}
+  .card .row span:last-child{color:var(--dim);font-size:12.5px;text-align:right}
+  .cycle{margin-top:4px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    border-top:1px solid #f3efe7;padding-top:12px}
+  .cycle input{width:64px;font:inherit;font-size:15px;text-align:center;padding:6px 4px;
+    border:1px solid var(--line);border-radius:10px;background:#fdfcf9;color:var(--ink)}
+
+  .rule{margin-top:18px;font-size:11.5px;color:var(--faint);text-align:center;line-height:1.5}
+  .danger{margin-top:20px;font-size:12px;color:var(--faint);text-align:center}
+  .ver{margin-top:12px;text-align:center;font-size:10px;color:#cfc9bd}
+
+  /* карта 75 дней — шторка */
+  .sheet{position:fixed;inset:0;background:rgba(33,30,25,.28);opacity:0;pointer-events:none;
+    transition:opacity .22s ease;z-index:40}
+  .sheet.open{opacity:1;pointer-events:auto}
+  .sheet .panel{position:absolute;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;
+    background:var(--paper);border-radius:22px 22px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(14px);transition:transform .24s ease;box-shadow:0 -8px 30px rgba(33,30,25,.12)}
+  .sheet.open .panel{transform:translateY(0)}
+  .sheethead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+  .sheethead h3{margin:0;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-weight:400;
+    font-size:24px;letter-spacing:-.3px}
+  .sheethead button{font:inherit;font-size:12px;color:var(--dim);background:none;border:0;padding:6px 2px}
+  .sheetsub{font-size:11.5px;color:var(--dim);margin:0 0 14px}
+  .mapgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .mcell{aspect-ratio:1;border-radius:8px;background:#fff;border:1px solid var(--line);
+    position:relative;transition:background .2s}
+  .mcell.l1{background:var(--l1);border-color:#b9d2b1}
+  .mcell.l2{background:var(--l2);border-color:#7aa876}
+  .mcell.l3{background:var(--l3);border-color:var(--l3);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+  .mcell.now{outline:3px solid var(--ink);outline-offset:2px;z-index:2}
+  .mcell.now:before{content:"";position:absolute;left:50%;bottom:5px;width:4px;height:4px;margin-left:-2px;
+    border-radius:50%;background:#fff}
+  .mcell.mile{box-shadow:0 0 0 1px rgba(33,30,25,.06)}
+  .mcell.future{background:#fcfaf7;border-color:#eae3d5}
+  .legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);margin-top:16px;flex-wrap:wrap}
+  .legend i{width:12px;height:12px;border-radius:4px;display:inline-block;border:1px solid var(--line);background:#fff}
+  .legend i.l1{background:var(--l1);border-color:#b9d2b1}
+  .legend i.l2{background:var(--l2);border-color:#7aa876}
+  .legend i.l3{background:var(--l3);border-color:var(--l3)}
+  .mapfoot{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;
+    font-size:12px;color:var(--dim)}
+  .mapfoot b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <button class="daybtn" id="openMap">
+    <span class="dnum" id="dayNum">День 1<small> из 75</small></span>
+    <span class="dsub" id="daySub">карта всех дней</span>
+  </button>
+  <div class="pill" id="todayLabel"></div>
+</header>
+
+<div class="stats">
+  <div class="stat hi"><b id="closedNum">0</b><i id="closedSub">закрыто из 0 дней</i></div>
+  <div class="stat"><b id="streakNum">0</b><i id="streakSub">дней подряд</i></div>
+  <div class="stat"><b id="leftNum">0</b><i id="leftSub">дней до финиша</i></div>
+</div>
+
+<h2>Неделя</h2>
+<div class="week" id="week"></div>
+
+<h2 id="listTitle">Сегодня</h2>
+<div id="habits"></div>
+
+<h2>Каждый день, без галочки</h2>
+<div class="card">
+  <div class="row"><span>Фолиевая кислота</span><span>400 мкг, с завтраком</span></div>
+  <div class="row"><span>Вода</span><span>2,3–2,5 л за день</span></div>
+  <div class="row"><span>Псилиум</span><span>5 г, вечером</span></div>
+  <div class="row"><span>SPF</span><span>30+, каждое утро</span></div>
+  <div class="cycle">
+    <label for="cycleDay">День цикла</label>
+    <input id="cycleDay" type="number" inputmode="numeric" min="1" max="60" placeholder="—">
+  </div>
+</div>
+
+<h2>Раз в неделю</h2>
+<div class="card">
+  <div class="row"><span>Воскресенье, 20:00</span><span>вес, талия, % дней</span></div>
+  <div class="row"><span>Отклики</span><span>5 в неделю, ср и пт</span></div>
+  <div class="row"><span>Мок-интервью</span><span>середина ноября, конец декабря</span></div>
+</div>
+
+<div class="rule">пропуск — день не закрашен. рестарта нет.</div>
+<div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
+<div class="ver">превью v9 · данные демонстрационные</div>
+
+<!-- карта -->
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="sheethead">
+      <h3>75 дней</h3>
+      <button id="closeMap">закрыть</button>
+    </div>
+    <p class="sheetsub" id="sheetSub">—</p>
+    <div class="mapgrid" id="mapgrid"></div>
+    <div class="legend">
+      <i></i> пусто <i class="l1"></i> начал <i class="l2"></i> больше половины <i class="l3"></i> закрыт
+    </div>
+    <div class="mapfoot">
+      <span id="mapClosed">—</span>
+      <span id="mapStreak">—</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const START = new Date(2026, 9, 26, 12);
+  const TOTAL = 75;
+  const HABITS = [
+    ["plank", "Планка утром",        "3 подхода · дыхание не задерживать"],
+    ["light", "30 минут улицы",      "в первый час после подъёма"],
+    ["steps", "8 000 шагов",         "суммарно за день · считает телефон"],
+    ["lift",  "Силовая",             "вт / чт / пт · зал или дом", [2,4,5]],
+    ["prot",  "Белок 120–135 г",     "ноль алкоголя, читмилов нет"],
+    ["eng",   "Английский 45 минут", "пн и чт — урок с тьютором", [1,4]],
+    ["read",  "10 страниц",          "бумага в постели, не телефон"],
+    ["eve",   "Дневник и отбой",     "3 строки · телефон вне спальни · 23:30"]
+  ];
+  const KEY = "hard90.v2";
+  const MILES = {24:1, 49:1, 74:1};
+
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } };
+  const save = s => localStorage.setItem(KEY, JSON.stringify(s));
+  const key = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const today = new Date(); today.setHours(12,0,0,0);
+  const dayIndex = Math.round((today - START) / 86400000);
+
+  let state = load();
+  if (!state.cycle) state.cycle = {};
+
+  let selected = new Date(Math.max(START.getTime(), today.getTime()));
+
+  const habitsFor = d => HABITS.filter(h => !h[3] || h[3].indexOf(d.getDay()) >= 0);
+
+  /* демо-данные только для превью: ?demo=1 и пустое хранилище */
+  const hasRealData = Object.keys(state).some(k => /^\d{4}-\d{2}-\d{2}$/.test(k) && state[k] && state[k].length);
+  if (new URLSearchParams(location.search).get("demo") === "1" && !hasRealData){
+    const prof = [[1],[0.72],[1],[0.45],[1],[1],[1],[1],[0.35]];
+    for (let i=0;i<prof.length && i<TOTAL;i++){
+      const d = new Date(START.getTime()+i*86400000);
+      const list = habitsFor(d);
+      const n = Math.round(list.length * prof[i][0]);
+      state[key(d)] = list.slice(0, n).map(h=>h[0]);
+    }
+    state.seeded = 1;
+    save(state);
+  }
+
+  const AUTO = { days: {} };
+  const autoFor = d => AUTO.days[key(d)] || null;
+  const autoDone = (id, d) => {
+    const a = autoFor(d);
+    if (!a) return null;
+    if (id === "steps") return !!a.steps_done;
+    if (id === "light") return !!a.walk_done;
+    return null;
+  };
+  const isDone = (id, d) => {
+    const on = state[key(d)] || [];
+    return autoDone(id, d) === true || on.indexOf(id) >= 0;
+  };
+  const doneFor = d => habitsFor(d).filter(h => isDone(h[0], d)).length;
+  const totalFor = d => habitsFor(d).length;
+
+  const loadAuto = () => fetch("auto.json?t=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if (j && j.days) { AUTO.days = j.days; render(); } })
+    .catch(() => {});
+
+  const WD = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
+  const WDS = ["вс","пн","вт","ср","чт","пт","сб"];
+  const MON = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+
+  const cycleInput = document.getElementById("cycleDay");
+  cycleInput.addEventListener("change", function(){
+    const sel = key(selected);
+    const v = parseInt(this.value, 10);
+    if (v >= 1 && v <= 60) state.cycle[sel] = v; else delete state.cycle[sel];
+    save(state);
+  });
+
+  const dayAt = i => new Date(START.getTime() + i*86400000);
+  const countClosed = (from, to) => {
+    let n = 0;
+    for (let i=from;i<to;i++){
+      const d = dayAt(i);
+      if (doneFor(d) === totalFor(d) && totalFor(d) > 0) n++;
+    }
+    return n;
+  };
+  const streaks = () => {
+    const elapsed = Math.min(Math.max(dayIndex + 1, 0), TOTAL);
+    let best = 0, run = 0;
+    for (let i=0;i<elapsed;i++){
+      const d = dayAt(i);
+      if (doneFor(d) === totalFor(d) && totalFor(d) > 0){ run++; if (run > best) best = run; }
+      else run = 0;
+    }
+    let cur = 0;
+    for (let i=Math.min(dayIndex, TOTAL-1); i>=0; i--){
+      const d = dayAt(i);
+      if (doneFor(d) === totalFor(d) && totalFor(d) > 0) cur++;
+      else if (i === Math.min(dayIndex, TOTAL-1)) continue; /* сегодня ещё можно закрыть */
+      else break;
+    }
+    return {best, cur};
+  };
+
+  function render(){
+    const idx = Math.round((selected - START)/86400000);
+    const inRange = idx >= 0 && idx < TOTAL;
+
+    document.getElementById("dayNum").innerHTML = inRange
+      ? "День " + (idx+1) + '<small> из 75</small>'
+      : (idx < 0 ? "До старта" : "Финиш");
+    document.getElementById("todayLabel").innerHTML =
+      WD[selected.getDay()] + "<b>" + selected.getDate() + " " + MON[selected.getMonth()] + "</b>";
+
+    /* числа */
+    const elapsed = Math.min(Math.max(dayIndex + 1, 0), TOTAL);
+    const closed = countClosed(0, elapsed);
+    const st = streaks();
+    document.getElementById("closedNum").textContent = closed;
+    const plural = (n, one, few, many) => {
+      const a = Math.abs(n) % 100, b = a % 10;
+      if (a > 10 && a < 20) return many;
+      if (b > 1 && b < 5) return few;
+      if (b === 1) return one;
+      return many;
+    };
+    document.getElementById("closedSub").textContent = "закрыто из " + elapsed + " " + plural(elapsed,"дня","дней","дней");
+    document.getElementById("streakNum").textContent = st.cur;
+    document.getElementById("streakSub").textContent = plural(st.cur,"день подряд","дня подряд","дней подряд");
+    const left = Math.max(TOTAL - Math.max(dayIndex + 1, 0), 0);
+    document.getElementById("leftNum").textContent = left;
+    document.getElementById("leftSub").textContent = plural(left,"день до финиша","дня до финиша","дней до финиша");
+
+    /* неделя */
+    const monday = new Date(selected.getTime());
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    monday.setHours(12,0,0,0);
+    const week = document.getElementById("week");
+    week.innerHTML = "";
+    for (let k=0;k<7;k++){
+      const d = new Date(monday.getTime() + k*86400000);
+      const i = Math.round((d - START)/86400000);
+      const ok = i >= 0 && i < TOTAL;
+      const on = doneFor(d), all = totalFor(d);
+      const el = document.createElement("div");
+      el.className = "wday" +
+        (key(d) === key(today) ? " today" : "") +
+        (key(d) === key(selected) ? " sel" : "") +
+        (!ok ? " off" : "");
+      let dots = "";
+      if (ok && i <= dayIndex)
+        for (let h=0;h<all;h++) dots += '<i class="' + (isDone(habitsFor(d)[h][0], d) ? "on" : "") + '"></i>';
+      el.innerHTML = '<span class="wd">' + WDS[d.getDay()] + '</span>' +
+        '<b class="dn">' + (ok ? d.getDate() : "·") + '</b>' +
+        '<div class="dots">' + dots + '</div>' +
+        '<span class="wp">' + (ok && i <= dayIndex ? Math.round(on/all*100) + "%" : "") + '</span>';
+      if (ok) el.onclick = function(){ selected = d; render(); };
+      week.appendChild(el);
+    }
+
+    /* привычки дня */
+    const sel = key(selected);
+    const on = state[sel] || [];
+    document.getElementById("listTitle").textContent =
+      inRange ? (key(selected) === key(today) ? "Сегодня" : "Этот день") : "Вне режима";
+
+    const box = document.getElementById("habits");
+    box.innerHTML = "";
+    habitsFor(selected).forEach(function(h){
+      const a = autoFor(selected);
+      const ad = autoDone(h[0], selected);
+      const isOn = ad === true || on.indexOf(h[0]) >= 0;
+      let hint = h[2], tag = "";
+      if (ad !== null) {
+        tag = '<span class="whoop">WHOOP</span>';
+        if (h[0] === "steps") {
+          hint = a.steps ? a.steps.toLocaleString("ru-RU") + " из 8 000 · синхронизировано" : "нет данных WHOOP";
+        } else {
+          hint = a.walk_min ? a.walk_start + " · " + a.walk_min + " мин · подъём " + (a.wake || "—")
+                            : "прогулки в первый час в WHOOP нет";
+        }
+      }
+      const el = document.createElement("div");
+      el.className = "habit" + (isOn ? " on" : "") + (key(selected) === key(today) && !isOn && !box.querySelector(".habit:not(.on)") ? " next" : "");
+      el.innerHTML = '<div class="dot">' + (isOn ? "✓" : "") + '</div>' +
+        '<div><div class="lbl">' + h[1] + tag + '</div><div class="hint">' + hint + '</div></div>';
+      if (ad !== true) {
+        el.onclick = function(){
+          const cur = state[sel] || [];
+          const i = cur.indexOf(h[0]);
+          if (i >= 0) cur.splice(i,1); else cur.push(h[0]);
+          state[sel] = cur; save(state); render();
+        };
+      }
+      box.appendChild(el);
+    });
+
+    const cv = state.cycle[sel];
+    cycleInput.value = cv ? cv : "";
+
+    /* карта */
+    const g = document.getElementById("mapgrid");
+    g.innerHTML = "";
+    for (let i=0;i<TOTAL;i++){
+      const d = dayAt(i);
+      const n = doneFor(d), all = totalFor(d);
+      const p = all ? n/all : 0;
+      const c = document.createElement("div");
+      const lvl = p >= 1 ? " l3" : p >= 0.5 ? " l2" : p > 0 ? " l1" : "";
+      c.className = "mcell" + lvl +
+        (i > dayIndex ? " future" : "") +
+        (key(d) === key(today) ? " now" : "") +
+        (MILES[i] ? " mile" : "");
+      c.onclick = function(){ selected = d; render(); closeSheet(); };
+      g.appendChild(c);
+    }
+    document.getElementById("sheetSub").textContent = "День " + Math.min(Math.max(dayIndex+1,0),TOTAL) + " из 75 · " +
+      Math.round((dayIndex < 0 ? 0 : Math.min(dayIndex+1,TOTAL)/TOTAL)*100) + "% срока";
+    document.getElementById("mapClosed").innerHTML = "<b>" + (elapsed ? Math.round(closed/elapsed*100) : 0) + "%</b> полных дней";
+    document.getElementById("mapStreak").innerHTML = "лучшая серия <b>" + st.best + "</b> · сейчас <b>" + st.cur + "</b>";
+  }
+
+  /* шторка */
+  const sheet = document.getElementById("sheet");
+  const openSheet = e => { if (e) e.preventDefault(); sheet.classList.add("open"); };
+  const closeSheet = () => sheet.classList.remove("open");
+  document.getElementById("openMap").onclick = openSheet;
+  document.getElementById("closeMap").onclick = closeSheet;
+  sheet.onclick = e => { if (e.target === sheet) closeSheet(); };
+
+  loadAuto();
+  setInterval(loadAuto, 600000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) loadAuto(); });
+
+  let armed = false;
+  document.getElementById("reset").onclick = function(){
+    if (!armed){ armed = true; this.textContent = "точно?"; setTimeout((function(){armed=false; this.textContent="нажать дважды";}).bind(this), 3000); return; }
+    localStorage.removeItem(KEY); state = {cycle:{}}; armed = false;
+    this.textContent = "нажать дважды"; render();
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
