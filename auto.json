@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-11T07:05:20+02:00",
+ "updated": "2026-11-11T09:05:20+02:00",
  "source": "whoop",
  "days": {
   "2026-10-26": {
@@ -147,7 +147,7 @@
    "wake": null
   },
   "2026-11-11": {
-   "steps": 0,
+   "steps": 443,
    "steps_goal": 8000,
    "steps_done": false,
    "walk_min": 0,
