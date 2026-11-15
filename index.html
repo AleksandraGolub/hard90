@@ -187,7 +187,22 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   const doneFor = d => habitsFor(d).filter(h => isDone(h[0], d)).length;
   const loadAuto = () => fetch("auto.json?t=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
-    .then(j => { if (j && j.days) { AUTO.days = j.days; render(); } })
+    .then(j => { if (j && j.days) {
+      // шаги WHOOP относятся к вчерашнему закрытому циклу — переносим на его дату
+      const norm = {};
+      Object.keys(j.days).forEach(function(k){
+        const a = j.days[k];
+        norm[k] = a;
+        if (!a || a.steps == null) return;
+        const src = a.steps_date || k;
+        if (src === k) return;
+        norm[src] = Object.assign({}, norm[src] || {}, {
+          steps: a.steps, steps_goal: a.steps_goal, steps_done: a.steps_done
+        });
+        norm[k] = Object.assign({}, a, { steps: 0, steps_done: false, steps_today: true });
+      });
+      AUTO.days = norm; render();
+    } })
     .catch(() => {});
 
   const WD = ["воскресенье","понедельник","вторник","среда","четверг","пятница","суббота"];
@@ -226,8 +241,8 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
         if (h[0] === "steps") {
           const n = a.steps || 0;
           hint = !n ? "пока нет шагов в WHOOP · день ещё идёт"
-               : (n >= 8000 ? n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано"
-                            : n.toLocaleString("ru-RU") + " из 8 000 · за вчерашний день");
+               : (~a.steps_date ? n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано"
+                                : n.toLocaleString("ru-RU") + " · за " + a.steps_date.slice(8) + "." + a.steps_date.slice(5,7) + " · синхронизировано");
         } else {
           hint = a.walk_min
             ? a.walk_start + " · " + a.walk_min + " мин · подъём " + (a.wake || "—")
