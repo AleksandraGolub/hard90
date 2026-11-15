@@ -136,7 +136,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
 <div class="rule">пропуск — день не закрашен. рестарта нет.</div>
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 8</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 9</div>
 
 <script>
 (function(){
@@ -224,7 +224,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       if (ad !== null) {
         tag = '<span class="whoop">WHOOP</span>';
         if (h[0] === "steps") {
-          hint = a.steps ? a.steps.toLocaleString("ru-RU") + " из 8 000 · синхронизировано" : "нет данных WHOOP";
+          const n = a.steps || 0;
+          hint = !n ? "пока нет шагов в WHOOP · день ещё идёт"
+               : (n >= 8000 ? n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано"
+                            : n.toLocaleString("ru-RU") + " из 8 000 · за вчерашний день");
         } else {
           hint = a.walk_min
             ? a.walk_start + " · " + a.walk_min + " мин · подъём " + (a.wake || "—")
