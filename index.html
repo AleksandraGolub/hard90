@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261116-4">
+<html lang="ru" data-build="20261116-5">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -102,6 +102,16 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   .legend i.full{background:var(--acc);border-color:var(--acc)}
   .danger{margin-top:26px;font-size:12px;color:var(--faint);text-align:center}
   .danger span{text-decoration:underline;text-underline-offset:3px}
+  .transfer{margin-top:10px;font-size:12px;color:var(--faint);text-align:center}
+  .transfer span{text-decoration:underline;text-underline-offset:3px}
+  #tpanel{display:none;margin-top:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:12px}
+  #tpanel textarea{width:100%;height:88px;font:12px/1.4 ui-monospace,Menlo,monospace;
+    border:1px solid var(--line);border-radius:10px;background:#fdfcf9;color:var(--ink);
+    padding:8px;resize:vertical;word-break:break-all}
+  #tpanel .thint{font-size:11.5px;color:var(--dim);margin:8px 0 0;line-height:1.4}
+  #tapply{display:none;margin-top:8px;font:inherit;font-size:12.5px;padding:7px 13px;
+    border:1px solid var(--acc-line);border-radius:10px;background:var(--acc-soft);color:#2f5c40;font-weight:600}
   .rule{margin-top:14px;font-size:11.5px;color:var(--faint);text-align:center;line-height:1.5}
 </style>
 </head>
@@ -141,7 +151,13 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
 <div class="rule">пропуск — день не закрашен. рестарта нет.</div>
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 9</div>
+<div class="transfer">перенести отметки: <span id="exp">экспорт</span> · <span id="imp">импорт</span></div>
+<div id="tpanel">
+  <textarea id="tarea" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+  <div class="thint" id="thint"></div>
+  <button id="tapply">применить</button>
+</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 10</div>
 
 <script>
 (function(){
@@ -309,6 +325,48 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   loadAuto();
   setInterval(loadAuto, 600000);
   document.addEventListener("visibilitychange", function(){ if (!document.hidden) loadAuto(); });
+
+  // перенос отметок между браузерами (ин-апп браузер ↔ приложение с домашнего экрана)
+  const tpanel = document.getElementById("tpanel");
+  const tarea  = document.getElementById("tarea");
+  const thint  = document.getElementById("thint");
+  const tapply = document.getElementById("tapply");
+  document.getElementById("exp").onclick = function(){
+    tpanel.style.display = "block";
+    tapply.style.display = "none";
+    tarea.value = JSON.stringify(state);
+    tarea.focus(); tarea.select();
+    let copied = false;
+    try { copied = navigator.clipboard && navigator.clipboard.writeText(tarea.value); } catch(e){}
+    thint.textContent = "скопируй всё выделенное и вставь в поле «импорт» в другом браузере";
+    if (copied && copied.then) copied.then(function(){ thint.textContent = "скопировано — теперь вставь во втором браузере"; }).catch(function(){});
+    else thint.textContent = "выделено — нажми «копировать» и вставь во втором браузере";
+  };
+  document.getElementById("imp").onclick = function(){
+    tpanel.style.display = "block";
+    tapply.style.display = "inline-block";
+    tarea.value = "";
+    tarea.focus();
+    thint.textContent = "вставь сюда текст из «экспорт» и нажми «применить»";
+  };
+  tapply.onclick = function(){
+    let inc;
+    try { inc = JSON.parse(tarea.value); } catch(e){ thint.textContent = "не разобрал: скопируй текст целиком, от { до }"; return; }
+    if (!inc || typeof inc !== "object" || Array.isArray(inc)) { thint.textContent = "это не похоже на отметки"; return; }
+    let days = 0, added = 0;
+    Object.keys(inc).forEach(function(k){
+      if (k === "cycle") {
+        state.cycle = Object.assign({}, inc.cycle || {}, state.cycle || {});
+        return;
+      }
+      if (!Array.isArray(inc[k])) return;
+      const cur = Array.isArray(state[k]) ? state[k].slice() : [];
+      inc[k].forEach(function(id){ if (cur.indexOf(id) < 0) { cur.push(id); added++; } });
+      if (cur.length) { state[k] = cur; days++; }
+    });
+    save(state); render();
+    thint.textContent = "готово: отметок слито " + added + ", дней с галочками " + days;
+  };
 
   let armed = false;
   document.getElementById("reset").onclick = function(){
