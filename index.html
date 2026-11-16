@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261027-1">
+<html lang="ru" data-build="20261116-4">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -151,7 +151,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     ["plank", "Планка утром",        "3 подхода · дыхание не задерживать"],
     ["light", "30 минут улицы",      "в первый час после подъёма"],
     ["steps", "8 000 шагов",         "суммарно за день · считает телефон"],
-    ["lift",  "Силовая",             "вт / чт / пт · зал или дом", [2,4,5]],
+    ["lift",  "Силовая",             "каждый день · зал или дом · чередуй A / B / C"],
     ["prot",  "Белок 120–135 г",     "ноль алкоголя, читмилов нет"],
     ["eng",   "Английский 45 минут", "пн и чт — урок с тьютором", [1,4]],
     ["read",  "10 страниц",          "бумага в постели, не телефон"],
@@ -170,7 +170,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   if (!state.cycle) state.cycle = {};
   let selected = new Date(Math.max(START.getTime(), today.getTime()));
 
-  // привычки, которые в этот день вообще есть: силовая — только вт/чт/пт
+  // привычки, которые в этот день вообще есть: силовая — каждый день, английский — пн и чт
   const habitsFor = d => HABITS.filter(h => !h[3] || h[3].indexOf(d.getDay()) >= 0);
 
   // WHOOP: шаги и утреннюю прогулку ставит скрипт, не руки
