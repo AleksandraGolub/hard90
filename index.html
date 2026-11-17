@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261116-5">
+<html lang="ru" data-build="20261117-1">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -261,9 +261,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
         tag = '<span class="whoop">WHOOP</span>';
         if (h[0] === "steps") {
           const n = a.steps || 0;
+          const others = a.steps_date && a.steps_date !== key(selected);
           hint = !n ? "пока нет шагов в WHOOP · день ещё идёт"
-               : (~a.steps_date ? n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано"
-                                : n.toLocaleString("ru-RU") + " · за " + a.steps_date.slice(8) + "." + a.steps_date.slice(5,7) + " · синхронизировано");
+               : (others ? n.toLocaleString("ru-RU") + " · за " + a.steps_date.slice(8) + "." + a.steps_date.slice(5,7) + " · синхронизировано"
+                         : n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано");
         } else {
           hint = a.walk_min
             ? a.walk_start + " · " + a.walk_min + " мин · подъём " + (a.wake || "—")
