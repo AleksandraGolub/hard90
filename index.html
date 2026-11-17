@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261117-1">
+<html lang="ru" data-build="20261117-2">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -196,7 +196,12 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   const autoDone = (id, d) => {
     const a = autoFor(d);
     if (!a) return null;
-    if (id === "steps") return !!a.steps_done;
+    if (id === "steps") {
+      // закрытый цикл WHOOP закрывает день; пока его нет — считаем живые шаги
+      if (a.steps) return !!a.steps_done;
+      if (a.steps_live != null) return a.steps_live >= (a.steps_goal || 8000);
+      return false;
+    }
     if (id === "light") return !!a.walk_done;
     return null;
   };
@@ -262,7 +267,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
         if (h[0] === "steps") {
           const n = a.steps || 0;
           const others = a.steps_date && a.steps_date !== key(selected);
-          hint = !n ? "пока нет шагов в WHOOP · день ещё идёт"
+          const liveN = a.steps_live == null ? null : a.steps_live;
+          hint = !n ? (liveN != null
+                 ? "≈" + liveN.toLocaleString("ru-RU") + " из 8 000 · день идёт" + (a.steps_live_since ? " · с " + a.steps_live_since : "")
+                 : "пока нет шагов в WHOOP · день ещё идёт")
                : (others ? n.toLocaleString("ru-RU") + " · за " + a.steps_date.slice(8) + "." + a.steps_date.slice(5,7) + " · синхронизировано"
                          : n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано");
         } else {
