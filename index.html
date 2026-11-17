@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261117-2">
+<html lang="ru" data-build="20261117-3">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -268,9 +268,11 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
           const n = a.steps || 0;
           const others = a.steps_date && a.steps_date !== key(selected);
           const liveN = a.steps_live == null ? null : a.steps_live;
+          const isPast = key(selected) < key(today);
           hint = !n ? (liveN != null
                  ? "≈" + liveN.toLocaleString("ru-RU") + " из 8 000 · день идёт" + (a.steps_live_since ? " · с " + a.steps_live_since : "")
-                 : "пока нет шагов в WHOOP · день ещё идёт")
+                 : (isPast ? "шагов за день нет · WHOOP данных не дал"
+                           : "пока нет шагов в WHOOP · день ещё идёт"))
                : (others ? n.toLocaleString("ru-RU") + " · за " + a.steps_date.slice(8) + "." + a.steps_date.slice(5,7) + " · синхронизировано"
                          : n.toLocaleString("ru-RU") + " из 8 000 · синхронизировано");
         } else {
