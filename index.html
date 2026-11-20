@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261120-1">
+<html lang="ru" data-build="20261120-3">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -95,7 +95,8 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   .cell b{position:relative;z-index:1;font-weight:600}
   .cell.past b{color:#7c766a}
   .cell.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc) inset}
-  .cell.now{border:1px dashed var(--acc);border-width:1.5px}
+  .cell.now::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;
+    background:var(--acc);box-shadow:0 0 0 2px #fff;z-index:2}
   .cell.mile b{color:var(--acc);font-weight:700}
   .legend{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--faint);margin-top:11px;flex-wrap:wrap}
   .legend i{width:13px;height:13px;border-radius:4px;background:var(--card);border:1px solid var(--line);display:inline-block}
