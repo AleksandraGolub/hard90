@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261117-4">
+<html lang="ru" data-build="20261120-1">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -94,7 +94,8 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     color:var(--faint);padding-bottom:3px;overflow:hidden;box-shadow:0 1px 1px rgba(33,30,25,.03)}
   .cell b{position:relative;z-index:1;font-weight:600}
   .cell.past b{color:#7c766a}
-  .cell.today{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc) inset}
+  .cell.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc) inset}
+  .cell.now{border:1px dashed var(--acc);border-width:1.5px}
   .cell.mile b{color:var(--acc);font-weight:700}
   .legend{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--faint);margin-top:11px;flex-wrap:wrap}
   .legend i{width:13px;height:13px;border-radius:4px;background:var(--card);border:1px solid var(--line);display:inline-block}
@@ -253,7 +254,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
     const sel = key(selected);
     const on = state[sel] || [];
-    document.getElementById("listTitle").textContent = inRange ? "Сегодня" : "Этот день вне режима";
+    const isToday = key(selected) === key(today);
+    document.getElementById("listTitle").textContent = !inRange
+      ? "Этот день вне режима"
+      : (isToday ? "Сегодня" : selected.getDate() + " " + MON[selected.getMonth()]);
 
     const box = document.getElementById("habits");
     box.innerHTML = "";
@@ -299,7 +303,8 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       const d = new Date(START.getTime() + i*86400000);
       const n = doneFor(d);
       const c = document.createElement("div");
-      c.className = "cell" + (key(d) === key(today) ? " today" : "") +
+      c.className = "cell" + (key(d) === key(selected) ? " sel" : "") +
+        (key(d) === key(today) ? " now" : "") +
         (MILES[i] ? " mile" : "") + (i < dayIndex ? " past" : "");
       const pct = Math.round(n / habitsFor(d).length * 100);
       c.style.background = pct === 0 ? "" : "linear-gradient(to top, var(--acc) " + pct + "%, #ffffff " + pct + "%)";
