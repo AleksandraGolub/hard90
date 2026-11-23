@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261123-1">
+<html lang="ru" data-build="20261123-2">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -110,6 +110,21 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   .danger span{text-decoration:underline;text-underline-offset:3px}
   .transfer{margin-top:10px;font-size:12px;color:var(--faint);text-align:center}
   .transfer span{text-decoration:underline;text-underline-offset:3px}
+  .sync{margin-top:18px;border-top:1px solid #f0ebe1;padding-top:14px}
+  .syncrow{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    font-size:12px;color:var(--faint)}
+  .syncrow #syncBtn{text-decoration:underline;text-underline-offset:3px}
+  .syncrow.ok #syncLabel{color:#3f6b4c}
+  .syncrow.err #syncLabel{color:#a8703f}
+  #syncPanel{display:none;margin-top:10px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:12px}
+  #syncPanel input{width:100%;font:13px ui-monospace,Menlo,monospace;padding:8px;
+    border:1px solid var(--line);border-radius:10px;background:#fdfcf9;color:var(--ink)}
+  .syncnote{font-size:11.5px;color:var(--dim);margin:8px 0 0;line-height:1.45}
+  .syngo{font-size:11px;color:var(--faint);margin:8px 0 0;line-height:1.45}
+  #syncApply{margin-top:9px;font:inherit;font-size:12.5px;padding:7px 13px;
+    border:1px solid var(--acc-line);border-radius:10px;background:var(--acc-soft);
+    color:#2f5c40;font-weight:600}
   #tpanel{display:none;margin-top:12px;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:12px}
   #tpanel textarea{width:100%;height:88px;font:12px/1.4 ui-monospace,Menlo,monospace;
@@ -158,13 +173,29 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
 <div class="rule">пропуск — день не закрашен. рестарта нет.</div>
 <div class="danger">сбросить всё <span id="reset">нажать дважды</span></div>
-<div class="transfer">перенести отметки: <span id="exp">экспорт</span> · <span id="imp">импорт</span></div>
+<div class="transfer">перенести отметки: <span id="exp">экспорт</span> · <span id="imp">импорт</span> · <span id="dlcopy">сохранить копию</span></div>
 <div id="tpanel">
   <textarea id="tarea" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
   <div class="thint" id="thint"></div>
   <button id="tapply">применить</button>
 </div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">v 10</div>
+
+<div class="sync">
+  <div class="syncrow">
+    <span id="syncLabel">облако: не подключено</span>
+    <span id="syncBtn">подключить</span>
+  </div>
+  <div id="syncPanel">
+    <input id="synctok" type="password" placeholder="вставь токен GitHub" spellcheck="false"
+           autocapitalize="off" autocorrect="off" autocomplete="off">
+    <div class="syncnote">отметки будут храниться в приватном gist в твоём аккаунте.
+      новый ярлык, другой браузер, новый телефон — данные подтянутся сами.</div>
+    <button id="syncApply">подключить</button>
+    <div class="syngo" id="syncHelp">как получить токен: github.com/settings/tokens → Fine-grained
+      tokens → Generate new → в Account permissions найди «Gists» → Read and write</div>
+  </div>
+</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">20261123-2</div>
 
 <script>
 (function(){
@@ -293,6 +324,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
     const v = parseInt(this.value, 10);
     if (v >= 1 && v <= 60) state.cycle[sel] = v; else delete state.cycle[sel];
     save(state);
+    schedulePush();
   });
 
   function render(){
@@ -342,6 +374,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
           const i = cur.indexOf(h[0]);
           if (i >= 0) cur.splice(i,1); else cur.push(h[0]);
           state[sel] = cur; save(state);
+          schedulePush();
           const after = streakNow();           // серия после тапа
           const nowFull = doneFor(selected) === habitsFor(selected).length;
           render();
@@ -468,16 +501,174 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       if (cur.length) { state[k] = cur; days++; }
     });
     save(state); render();
+    schedulePush();
     thint.textContent = "готово: отметок слито " + added + ", дней с галочками " + days;
+  };
+
+  // ── облако: приватный gist в её аккаунте ────────────────────────────────────
+  const SKEY = "hard90.sync";
+  const syncMeta = () => { try { return JSON.parse(localStorage.getItem(SKEY)) || {}; } catch(e){ return {}; } };
+  const saveSyncMeta = m => localStorage.setItem(SKEY, JSON.stringify(m));
+  const syncRow = document.querySelector(".syncrow");
+  const syncLabel = document.getElementById("syncLabel");
+  const syncPanel = document.getElementById("syncPanel");
+  const syncTok = document.getElementById("synctok");
+  const syncBtnEl = document.getElementById("syncBtn");
+
+  function setSync(text, cls){
+    syncLabel.textContent = text;
+    syncRow.className = "syncrow" + (cls ? " " + cls : "");
+  }
+  // показываем состояние без токена
+  function syncPaint(){
+    const m = syncMeta();
+    if (!m.token){ setSync("облако: не подключено", ""); syncBtnEl.textContent = "подключить"; return; }
+    setSync("облако: " + (m.gistId ? "подключено" : "ждёт записи") + (m.login ? " · " + m.login : ""), "ok");
+    syncBtnEl.textContent = "отключить";
+  }
+
+  // тонкая обёртка над GitHub API: токен уходит только на api.github.com
+  async function gh(path, opts, token){
+    const r = await fetch("https://api.github.com" + path, Object.assign({
+      headers: { "Authorization": "token " + token,
+                 "Accept": "application/vnd.github+json",
+                 "Content-Type": "application/json" }
+    }, opts || {}));
+    if (!r.ok){
+      let t = ""; try { t = await r.text(); } catch(e){}
+      const err = new Error("HTTP " + r.status + (t ? " " + t.slice(0, 100) : ""));
+      err.status = r.status;
+      throw err;
+    }
+    return r.json();
+  }
+
+  // слияние с чужой копией: только добавление, ничего не затирает
+  function mergeIn(inc){
+    if (!inc || typeof inc !== "object" || Array.isArray(inc)) return 0;
+    let added = 0;
+    Object.keys(inc).forEach(function(k){
+      if (k === "cycle"){ state.cycle = Object.assign({}, inc.cycle || {}, state.cycle || {}); return; }
+      if (!Array.isArray(inc[k])) return;
+      const cur = Array.isArray(state[k]) ? state[k].slice() : [];
+      inc[k].forEach(function(id){ if (cur.indexOf(id) < 0){ cur.push(id); added++; } });
+      if (cur.length) state[k] = cur;
+    });
+    if (added) save(state);
+    return added;
+  }
+
+  let pushTimer = null, syncing = false;
+  function schedulePush(){
+    if (!syncMeta().token) return;
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushNow, 1200);
+  }
+
+  async function pushNow(){
+    const m = syncMeta();
+    if (!m.token) return;
+    if (syncing){ schedulePush(); return; }
+    syncing = true;
+    try {
+      const content = JSON.stringify({ state: state, saved: new Date().toISOString() }, null, 1);
+      if (m.gistId){
+        await gh("/gists/" + m.gistId, { method: "PATCH",
+          body: JSON.stringify({ files: { "hard90.json": { content: content } } }) }, m.token);
+      } else {
+        const g = await gh("/gists", { method: "POST", body: JSON.stringify({
+          description: "hard90 — отметки трекера", public: false,
+          files: { "hard90.json": { content: content } } }) }, m.token);
+        m.gistId = g.id; saveSyncMeta(m);
+      }
+      setSync("облако: сохранено " + new Date().toTimeString().slice(0,5), "ok");
+    } catch(e){
+      setSync("облако: не записалось (" + String(e.message || e).slice(0, 46) + ")", "err");
+    } finally { syncing = false; }
+  }
+
+  async function pullNow(){
+    const m = syncMeta();
+    if (!m.token || !m.gistId) return 0;
+    try {
+      const g = await gh("/gists/" + m.gistId, null, m.token);
+      const f = g.files && (g.files["hard90.json"] || Object.values(g.files)[0]);
+      if (!f) return 0;
+      let raw = f.content || "";
+      if (f.truncated && f.raw_url) raw = await (await fetch(f.raw_url)).text();
+      const data = JSON.parse(raw || "{}");
+      const added = mergeIn(data.state || data);
+      if (added) render();
+      setSync(added ? "облако: подтянуто " + added + " отметок" : "облако: всё совпадает", "ok");
+      return added;
+    } catch(e){
+      setSync("облако: не прочиталось (" + String(e.message || e).slice(0, 46) + ")", "err");
+      return 0;
+    }
+  }
+
+  async function connectSync(){
+    const token = (syncTok.value || "").trim();
+    if (!token){ setSync("облако: нужен токен", "err"); return; }
+    setSync("облако: проверяю токен…", "");
+    try {
+      const u = await gh("/user", null, token);
+      let id = null;
+      const list = await gh("/gists?per_page=100", null, token);
+      (Array.isArray(list) ? list : []).forEach(function(g){
+        if (!id && g.files && g.files["hard90.json"]) id = g.id;
+      });
+      saveSyncMeta({ token: token, gistId: id, login: u.login });
+      syncTok.value = "";
+      syncPanel.style.display = "none";
+      if (id) await pullNow(); else await pushNow();
+      syncPaint();
+    } catch(e){
+      const code = e.status;
+      setSync("облако: " + (code === 401 ? "токен не подошёл" : String(e.message || e).slice(0, 46)), "err");
+    }
+  }
+
+  syncBtnEl.onclick = function(){
+    const m = syncMeta();
+    if (m.token){
+      if (!confirm("Отключить облако? Отметки останутся и в телефоне, и в gist.")) return;
+      localStorage.removeItem(SKEY);
+      syncPaint();
+      return;
+    }
+    syncPanel.style.display = syncPanel.style.display === "block" ? "none" : "block";
+  };
+  document.getElementById("syncApply").onclick = connectSync;
+
+  // копия файлом в «Файлы» — работает без токена и без сети
+  document.getElementById("dlcopy").onclick = function(){
+    try {
+      const blob = new Blob([JSON.stringify(state)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "hard90-" + key(today) + ".json";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 1500);
+      flashTick("копия ушла в Файлы");
+    } catch(e){ flashTick("не смог сохранить", true); }
   };
 
   let armed = false;
   document.getElementById("reset").onclick = function(){
     if (!armed){ armed = true; this.textContent = "точно?"; setTimeout((function(){armed=false; this.textContent="нажать дважды";}).bind(this), 3000); return; }
     localStorage.removeItem(KEY); state = {}; state.cycle = {}; armed = false; this.textContent = "нажать дважды"; render();
+    // сброс должен уйти и в облако, иначе следующий pull вернёт старые отметки
+    pushNow();
   };
 
   render();
+  syncPaint();
+  if (syncMeta().token && syncMeta().gistId) pullNow();
+  // вернулась в приложение — забираем то, что могло появиться с другого устройства
+  document.addEventListener("visibilitychange", function(){
+    if (!document.hidden && syncMeta().token) pullNow();
+  });
 })();
 </script>
 </body>
