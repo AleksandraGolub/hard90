@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261123-2">
+<html lang="ru" data-build="20261123-3">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,13 +11,14 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512-v4.png">
 <link rel="shortcut icon" href="favicon-v4.ico">
 <link rel="manifest" href="manifest.json">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 /* защита от кэша: если на сервере новее — перезагружаемся с новым ?v= */
 fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(v){
   v=(v||"").trim(); var cur=document.documentElement.getAttribute("data-build");
   var asked=new URLSearchParams(location.search).get("v");
   /* редирект один раз: если в URL уже эта версия, а билд всё равно старый — не перезагружаемся по кругу */
-  if(v && cur && v!==cur && asked!==v){ location.replace(location.pathname+"?v="+encodeURIComponent(v)); }
+  if(v && cur && v!==cur && asked!==v){ location.replace(location.pathname+"?v="+encodeURIComponent(v)+location.hash); }
 }).catch(function(){});
 </script>
 <title>75 дней</title>
@@ -63,6 +64,10 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   transition:color .2s,opacity .2s}
 .tick.show{color:#2f5c40;font-weight:600}
 .tick.gap{color:#a8703f}
+.where{font-size:10.5px;color:var(--faint);margin-top:3px;line-height:1.35}
+.where b{font-weight:600;color:#7c766a}
+body.tg{padding-top:max(12px, env(safe-area-inset-top))}
+body.tg .day{font-size:38px}
   h2{font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--faint);
     margin:26px 0 11px;font-weight:600}
   .habit{display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--line);
@@ -144,6 +149,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 <div class="bar"><i id="barFill"></i></div>
 <div class="barnote"><span id="barLeft"></span><span id="barRight"></span></div>
 <div class="tick" id="tick"></div>
+<div class="where" id="where"></div>
 
 <h2 id="listTitle">Сегодня</h2>
 <div id="habits"></div>
@@ -195,7 +201,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
       tokens → Generate new → в Account permissions найди «Gists» → Read and write</div>
   </div>
 </div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">20261123-2</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">20261123-3</div>
 
 <script>
 (function(){
@@ -216,7 +222,15 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
 
   // ── серия полных дней и «не пропусти дважды» ────────────────────────────────
   // троттлинг вибрации: iOS проводит не больше одной вибрации в пару секунд, частые вызовы не критичны
-  const haptic = (ms) => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} };
+  const tgApp = () => (window.Telegram && window.Telegram.WebApp) || null;
+  // в Telegram Mini App вибрирует нативный HapticFeedback (работает и на iPhone), в вебе — navigator.vibrate
+  const haptic = (ms) => {
+    try {
+      const tg = tgApp();
+      if (tg && tg.HapticFeedback) { tg.HapticFeedback.impactOccurred(ms >= 25 ? "medium" : "light"); return; }
+      if (navigator.vibrate) navigator.vibrate(ms);
+    } catch(e){}
+  };
   // русское склонение: 1 день, 2 дня, 5 дней
   const plural = (n) => {
     const a = Math.abs(n) % 100, b = a % 10;
@@ -522,9 +536,31 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   // показываем состояние без токена
   function syncPaint(){
     const m = syncMeta();
-    if (!m.token){ setSync("облако: не подключено", ""); syncBtnEl.textContent = "подключить"; return; }
+    const whereEl = document.getElementById("where");
+    if (!m.token){
+      setSync("облако: не подключено", "");
+      syncBtnEl.textContent = "подключить";
+      if (whereEl) whereEl.innerHTML = "отметки лежат <b>только в этом телефоне</b> — при удалении приложения они пропадут";
+      return;
+    }
     setSync("облако: " + (m.gistId ? "подключено" : "ждёт записи") + (m.login ? " · " + m.login : ""), "ok");
     syncBtnEl.textContent = "отключить";
+    if (whereEl) whereEl.innerHTML = "отметки <b>в облаке</b>" + (m.login ? " · " + m.login : "") +
+      " — переживут удаление приложения и новый телефон";
+  }
+
+  // внутри Telegram: развернуть на весь экран и не давать свайпом закрыть приложение
+  function initTelegram(){
+    const tg = tgApp();
+    if (!tg || (!tg.initData && tg.platform === "unknown")) return;
+    try {
+      if (tg.ready) tg.ready();
+      if (tg.expand) tg.expand();
+      if (tg.setHeaderColor) tg.setHeaderColor("#faf8f3");
+      if (tg.setBackgroundColor) tg.setBackgroundColor("#f7f4ee");
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+      document.body.classList.add("tg");
+    } catch(e){}
   }
 
   // тонкая обёртка над GitHub API: токен уходит только на api.github.com
@@ -663,6 +699,7 @@ fetch("version.txt?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.
   };
 
   render();
+  initTelegram();
   syncPaint();
   if (syncMeta().token && syncMeta().gistId) pullNow();
   // вернулась в приложение — забираем то, что могло появиться с другого устройства
