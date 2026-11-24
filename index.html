@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-build="20261123-3">
+<html lang="ru" data-build="20261124-1">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -201,7 +201,7 @@ body.tg .day{font-size:38px}
       tokens → Generate new → в Account permissions найди «Gists» → Read and write</div>
   </div>
 </div>
-<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">20261123-3</div>
+<div style="margin-top:14px;text-align:center;font-size:10.5px;color:#cfc9bd">20261124-1</div>
 
 <script>
 (function(){
@@ -223,13 +223,47 @@ body.tg .day{font-size:38px}
   // ── серия полных дней и «не пропусти дважды» ────────────────────────────────
   // троттлинг вибрации: iOS проводит не больше одной вибрации в пару секунд, частые вызовы не критичны
   const tgApp = () => (window.Telegram && window.Telegram.WebApp) || null;
-  // в Telegram Mini App вибрирует нативный HapticFeedback (работает и на iPhone), в вебе — navigator.vibrate
+  // telegram-web-app.js грузится всегда и HapticFeedback есть даже вне Telegram,
+  // поэтому контекст проверяем по platform/initData, иначе вибрация уходит в пустоту
+  const inTelegram = () => {
+    const tg = tgApp();
+    return !!(tg && tg.HapticFeedback && !(tg.platform === "unknown" && !tg.initData));
+  };
+  // в Telegram Mini App вибрирует нативный HapticFeedback (работает и на iPhone),
+  // в Android-Chrome — navigator.vibrate, на iPhone — тик от tapTick()
   const haptic = (ms) => {
     try {
       const tg = tgApp();
-      if (tg && tg.HapticFeedback) { tg.HapticFeedback.impactOccurred(ms >= 25 ? "medium" : "light"); return; }
+      if (inTelegram()) { tg.HapticFeedback.impactOccurred(ms >= 25 ? "medium" : "light"); return; }
       if (navigator.vibrate) navigator.vibrate(ms);
     } catch(e){}
+  };
+  // ── Taptic на iPhone ───────────────────────────────────────────────────────
+  // Safari не умеет navigator.vibrate никогда. Единственная вибрация в вебе —
+  // системный тик <input type="checkbox" switch> (Safari 17.4+), причём с iOS 26.5
+  // только от настоящего тапа: программный .click() Apple закрыла. Поэтому поверх
+  // элемента лежит прозрачный <label>: палец попадает в него, label передаёт тап
+  // на switch, тик играет, а клик всплывает к обработчику элемента.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const tapTick = (el) => {
+    if (!isIOS || !el || el.querySelector(":scope > [data-tap]")) return;
+    if (inTelegram()) return;              // в Telegram тикает нативно — второй не нужен
+    const lab = document.createElement("label");
+    lab.setAttribute("data-tap", "");
+    lab.setAttribute("aria-hidden", "true");
+    lab.style.cssText = "position:absolute;inset:0;touch-action:manipulation;" +
+      "-webkit-tap-highlight-color:transparent";
+    const inp = document.createElement("input");
+    inp.type = "checkbox";
+    inp.setAttribute("switch", "");
+    inp.tabIndex = -1;                     // фокус и скролл оставляем label
+    inp.style.cssText = "position:absolute;width:1px;height:1px;margin:0;visibility:hidden";
+    // forwarded-клик от label не должен дойти до элемента второй раз
+    inp.addEventListener("click", function(e){ e.stopPropagation(); });
+    lab.appendChild(inp);
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    el.appendChild(lab);
   };
   // русское склонение: 1 день, 2 дня, 5 дней
   const plural = (n) => {
@@ -408,6 +442,7 @@ body.tg .day{font-size:38px}
           }
         };
       }
+      if (ad !== true) tapTick(el);
       box.appendChild(el);
     });
 
@@ -431,6 +466,7 @@ body.tg .day{font-size:38px}
         var r=document.getElementById("listTitle").getBoundingClientRect();
         if(r.top<0 || r.bottom>window.innerHeight) document.getElementById("listTitle").scrollIntoView({behavior:"smooth",block:"start"});
       };
+      tapTick(c);
       g.appendChild(c);
     }
 
